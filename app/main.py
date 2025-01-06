@@ -10,7 +10,7 @@ from app.word_manager import WordManager
 from word_sources.local_dictionary_word_source import LocalDictionaryWordSource
 from word_sources.project_gutenberg_word_source import ProjectGutenbergWordSource
 from word_sources.exceptions import WordSourceException
-from app.config import DATA_LAKE_PATH, DATA_MART_PATH
+from config import DATA_LAKE_PATH, DATA_MART_PATH
 
 def main():
     print("Seleccione la fuente de datos:")

@@ -8,7 +8,7 @@ import networkx as nx
 # Asegurarse de que Python reconozca la carpeta raíz del proyecto
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from app.config import DATA_MART_PATH
+from config import DATA_MART_PATH
 from graph.graph import Graph
 
 app = Flask(__name__)
