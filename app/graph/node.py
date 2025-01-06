@@ -8,7 +8,9 @@ class Node:
         return f"Node({self.word})"
 
     def __eq__(self, other):
-        return isinstance(other, Node) and other.word == self.word
+        if isinstance(other, Node):
+            return self.word == other.word
+        return False
 
     def __hash__(self):
         return hash(self.word)
