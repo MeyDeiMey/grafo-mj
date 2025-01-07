@@ -1,5 +1,6 @@
+########################################################
 # terraform/main.tf
-
+########################################################
 provider "aws" {
   region     = "us-east-1"
   access_key = var.aws_access_key_id
@@ -11,7 +12,6 @@ variable "aws_access_key_id" {}
 variable "aws_secret_access_key" {}
 variable "aws_session_token" {}
 
-# Variables para la llave SSH
 variable "key_name" {
   description = "Nombre del Key Pair para SSH"
   type        = string
@@ -22,13 +22,11 @@ variable "public_key_path" {
   type        = string
 }
 
-# Crear un Key Pair
 resource "aws_key_pair" "deployer" {
   key_name   = var.key_name
   public_key = file(var.public_key_path)
 }
 
-# Data Sources para VPC y Subnets
 data "aws_vpc" "default" {
   default = true
 }
@@ -40,7 +38,6 @@ data "aws_subnets" "default" {
   }
 }
 
-# Security Group
 resource "aws_security_group" "graph_sg" {
   name        = "graph_sg"
   description = "Allow inbound on ports 80, 5000 and SSH"
@@ -83,7 +80,6 @@ resource "aws_security_group" "graph_sg" {
   }
 }
 
-# Instancia EC2
 resource "aws_instance" "graph_ec2" {
   ami                    = "ami-0e731c8a588258d0d"  # Verifica que este AMI existe en us-east-1
   instance_type          = "t2.micro"
@@ -91,9 +87,8 @@ resource "aws_instance" "graph_ec2" {
   vpc_security_group_ids = [aws_security_group.graph_sg.id]
   key_name               = aws_key_pair.deployer.key_name
 
-  associate_public_ip_address = true  # Permitir una IP pública dinámica
+  associate_public_ip_address = true  # IP pública dinámica
 
-  # user_data: clonar tu repo, instalar dependencias, iniciar la API
   user_data = <<-EOF
     #!/bin/bash
     set -e
@@ -113,6 +108,12 @@ resource "aws_instance" "graph_ec2" {
     cd /home/ec2-user
     git clone https://github.com/JoaquinIP/graphword-mj.git
     echo "Clonación del repositorio completada"
+
+    # (1) Eliminar/renombrar default.conf si existe, para evitar conflictos de server_name "_"
+    if [ -f /etc/nginx/conf.d/default.conf ]; then
+      mv /etc/nginx/conf.d/default.conf /etc/nginx/conf.d/default.conf.backup
+      echo "default.conf renombrado para evitar conflicto de server_name _"
+    fi
 
     # Navegar al directorio de la APP
     cd graphword-mj/app
@@ -140,7 +141,6 @@ resource "aws_instance" "graph_ec2" {
     EOL
     echo "Configuración de Nginx completada"
 
-    # Reiniciar Nginx
     systemctl enable nginx
     systemctl restart nginx
     echo "Nginx reiniciado"
@@ -149,7 +149,7 @@ resource "aws_instance" "graph_ec2" {
     cd /home/ec2-user/graphword-mj/app/api
     echo "Navegación al directorio de la API Flask completada"
 
-    # Iniciar la API con Gunicorn
+    # Iniciar la API con Gunicorn (modo simple)
     nohup gunicorn --bind 127.0.0.1:5000 api:app > app.log 2>&1 &
     echo "Gunicorn iniciado"
   EOF
@@ -159,7 +159,9 @@ resource "aws_instance" "graph_ec2" {
   }
 }
 
+###################################################
 # API Gateway
+###################################################
 resource "aws_apigatewayv2_api" "graph_api" {
   name          = "graph-api"
   protocol_type = "HTTP"
@@ -168,7 +170,9 @@ resource "aws_apigatewayv2_api" "graph_api" {
 resource "aws_apigatewayv2_integration" "http_proxy" {
   api_id             = aws_apigatewayv2_api.graph_api.id
   integration_type   = "HTTP_PROXY"
-  integration_uri    = "http://${aws_instance.graph_ec2.public_dns}:80"  # Sin barra inclinada final
+
+  # (2) Sin barra inclinada final
+  integration_uri    = "http://${aws_instance.graph_ec2.public_dns}:80"
   connection_type    = "INTERNET"
   integration_method = "ANY"
 
@@ -177,7 +181,7 @@ resource "aws_apigatewayv2_integration" "http_proxy" {
 
 resource "aws_apigatewayv2_route" "proxy" {
   api_id    = aws_apigatewayv2_api.graph_api.id
-  route_key = "ANY /{proxy+}"  # Maneja todas las rutas y métodos
+  route_key = "ANY /{proxy+}"
   target    = "integrations/${aws_apigatewayv2_integration.http_proxy.id}"
 }
 
@@ -187,7 +191,9 @@ resource "aws_apigatewayv2_stage" "dev" {
   auto_deploy = true
 }
 
+########################################
 # Outputs
+########################################
 output "api_endpoint" {
   value = aws_apigatewayv2_stage.dev.invoke_url
 }
