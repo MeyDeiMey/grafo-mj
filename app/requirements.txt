@@ -1,3 +1,5 @@
-flask
-boto3
-networkx
+flask==2.3.2
+boto3==1.26.3
+networkx==2.8.8
+matplotlib==3.6.3
+requests==2.31.0
