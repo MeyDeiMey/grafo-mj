@@ -1,6 +1,7 @@
 # api/api.py
 
 from flask import Flask, request, jsonify
+from werkzeug.middleware.proxy_fix import ProxyFix
 import os
 import sys
 import pickle
@@ -14,6 +15,8 @@ from config import DATA_MART_PATH
 from graph.graph import Graph
 
 app = Flask(__name__)
+
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 
 # Configurar logging
 logging.basicConfig(

@@ -43,8 +43,16 @@ data "aws_subnets" "default" {
 # Security Group
 resource "aws_security_group" "graph_sg" {
   name        = "graph_sg"
-  description = "Allow inbound on port 5000 and SSH"
+  description = "Allow inbound on ports 80, 5000 and SSH"
   vpc_id      = data.aws_vpc.default.id
+
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "Allow HTTP traffic on port 80"
+  }
 
   ingress {
     from_port   = 5000
@@ -59,7 +67,7 @@ resource "aws_security_group" "graph_sg" {
     to_port     = 22
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
-    description = "Allow SSH from my IP"
+    description = "Allow SSH from any IP"
   }
 
   egress {
@@ -83,7 +91,7 @@ resource "aws_instance" "graph_ec2" {
   vpc_security_group_ids = [aws_security_group.graph_sg.id]
   key_name               = aws_key_pair.deployer.key_name
 
-  associate_public_ip_address = true
+  associate_public_ip_address = true  # Permitir una IP pública dinámica
 
   # user_data: clonar tu repo, instalar dependencias, iniciar la API
   user_data = <<-EOF
@@ -151,7 +159,6 @@ resource "aws_instance" "graph_ec2" {
   }
 }
 
-
 # API Gateway
 resource "aws_apigatewayv2_api" "graph_api" {
   name          = "graph-api"
@@ -159,18 +166,18 @@ resource "aws_apigatewayv2_api" "graph_api" {
 }
 
 resource "aws_apigatewayv2_integration" "http_proxy" {
-  api_id               = aws_apigatewayv2_api.graph_api.id
-  integration_type     = "HTTP_PROXY"
-  integration_uri      = "http://${aws_instance.graph_ec2.public_dns}:5000/"
-  connection_type      = "INTERNET"
-  integration_method   = "ANY"
+  api_id             = aws_apigatewayv2_api.graph_api.id
+  integration_type   = "HTTP_PROXY"
+  integration_uri    = "http://${aws_instance.graph_ec2.public_dns}:80"  # Sin barra inclinada final
+  connection_type    = "INTERNET"
+  integration_method = "ANY"
 
   depends_on = [aws_instance.graph_ec2]
 }
 
 resource "aws_apigatewayv2_route" "proxy" {
   api_id    = aws_apigatewayv2_api.graph_api.id
-  route_key = "ANY /{proxy+}"
+  route_key = "ANY /{proxy+}"  # Maneja todas las rutas y métodos
   target    = "integrations/${aws_apigatewayv2_integration.http_proxy.id}"
 }
 
