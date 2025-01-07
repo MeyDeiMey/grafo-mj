@@ -1,3 +1,6 @@
 flask
 boto3
 networkx
+matplotlib
+requests
+flask-cors
