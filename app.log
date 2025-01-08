@@ -1,0 +1,196 @@
+2025-01-07 02:50:55,408 INFO __main__ Iniciando construcciÛn del grafo
+2025-01-07 02:53:03,998 INFO __main__ Grafo construido exitosamente: 14076 nodos, 7761 aristas.
+2025-01-07 02:53:03,999 INFO __main__ La aplicaciÛn ha iniciado con el grafo ya construido.
+2025-01-07 02:53:04,038 INFO werkzeug [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.1.106:5000
+2025-01-07 02:53:04,039 INFO werkzeug [33mPress CTRL+C to quit[0m
+2025-01-07 02:53:04,041 INFO werkzeug  * Restarting with stat
+2025-01-07 02:53:04,534 INFO __main__ Iniciando construcciÛn del grafo
+2025-01-07 02:55:10,114 INFO __main__ Grafo construido exitosamente: 14076 nodos, 7761 aristas.
+2025-01-07 02:55:10,116 INFO __main__ La aplicaciÛn ha iniciado con el grafo ya construido.
+2025-01-07 02:55:10,126 WARNING werkzeug  * Debugger is active!
+2025-01-07 02:55:10,132 INFO werkzeug  * Debugger PIN: 309-452-387
+2025-01-07 02:55:10,401 INFO werkzeug 127.0.0.1 - - [07/Jan/2025 02:55:10] "GET /shortest-path?word1=test&word2=rock HTTP/1.1" 200 -
+2025-01-07 02:55:18,551 INFO werkzeug 127.0.0.1 - - [07/Jan/2025 02:55:18] "GET /shortest-path?word1=test&word2=rock HTTP/1.1" 200 -
+2025-01-07 02:55:24,576 INFO werkzeug 127.0.0.1 - - [07/Jan/2025 02:55:24] "GET /shortest-path?word1=test&word2=rock HTTP/1.1" 200 -
+2025-01-07 02:55:33,388 INFO werkzeug 127.0.0.1 - - [07/Jan/2025 02:55:33] "GET /shortest-path?word1=test&word2=rock HTTP/1.1" 200 -
+2025-01-07 02:55:34,140 INFO werkzeug 127.0.0.1 - - [07/Jan/2025 02:55:34] "GET /shortest-path?word1=test&word2=rock HTTP/1.1" 200 -
+2025-01-07 02:55:34,826 INFO werkzeug 127.0.0.1 - - [07/Jan/2025 02:55:34] "GET /shortest-path?word1=test&word2=rock HTTP/1.1" 200 -
+2025-01-07 02:55:35,540 INFO werkzeug 127.0.0.1 - - [07/Jan/2025 02:55:35] "GET /shortest-path?word1=test&word2=rock HTTP/1.1" 200 -
+2025-01-07 02:55:36,218 INFO werkzeug 127.0.0.1 - - [07/Jan/2025 02:55:36] "GET /shortest-path?word1=test&word2=rock HTTP/1.1" 200 -
+2025-01-07 03:01:24,864 ERROR __main__ Archivo serializado del grafo no encontrado en c:\Users\joaqu\Documents\graphword-mj\app\api\graph.pkl
+2025-01-07 03:01:24,864 ERROR __main__ La aplicaciÛn ha iniciado sin un grafo cargado.
+2025-01-07 03:01:24,886 INFO werkzeug [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.1.106:5000
+2025-01-07 03:01:24,887 INFO werkzeug [33mPress CTRL+C to quit[0m
+2025-01-07 03:01:24,889 INFO werkzeug  * Restarting with stat
+2025-01-07 03:01:25,303 ERROR __main__ Archivo serializado del grafo no encontrado en c:\Users\joaqu\Documents\graphword-mj\app\api\graph.pkl
+2025-01-07 03:01:25,304 ERROR __main__ La aplicaciÛn ha iniciado sin un grafo cargado.
+2025-01-07 03:01:25,312 WARNING werkzeug  * Debugger is active!
+2025-01-07 03:01:25,316 INFO werkzeug  * Debugger PIN: 309-452-387
+2025-01-07 03:03:36,251 INFO __main__ Grafo cargado exitosamente desde c:\Users\joaqu\Documents\graphword-mj\app\graph.pkl: 14076 nodos, 7761 aristas.
+2025-01-07 03:03:36,251 INFO __main__ La aplicaciÛn ha iniciado con el grafo ya cargado.
+2025-01-07 03:03:36,286 INFO werkzeug [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.1.106:5000
+2025-01-07 03:03:36,287 INFO werkzeug [33mPress CTRL+C to quit[0m
+2025-01-07 03:03:36,292 INFO werkzeug  * Restarting with stat
+2025-01-07 03:03:36,874 INFO __main__ Grafo cargado exitosamente desde c:\Users\joaqu\Documents\graphword-mj\app\graph.pkl: 14076 nodos, 7761 aristas.
+2025-01-07 03:03:36,875 INFO __main__ La aplicaciÛn ha iniciado con el grafo ya cargado.
+2025-01-07 03:03:36,886 WARNING werkzeug  * Debugger is active!
+2025-01-07 03:03:36,890 INFO werkzeug  * Debugger PIN: 309-452-387
+2025-01-07 03:03:47,054 INFO werkzeug 127.0.0.1 - - [07/Jan/2025 03:03:47] "GET /shortest-path?word1=test&word2=rock HTTP/1.1" 200 -
+2025-01-07 03:03:49,034 INFO werkzeug 127.0.0.1 - - [07/Jan/2025 03:03:49] "GET /shortest-path?word1=test&word2=rock HTTP/1.1" 200 -
+2025-01-07 03:04:06,271 INFO werkzeug 127.0.0.1 - - [07/Jan/2025 03:04:06] "GET /shortest-path?word1=dog&word2=cat HTTP/1.1" 200 -
+2025-01-07 03:04:18,900 ERROR __main__ Error al encontrar el camino m·s corto: Either source Node(dog) or target Node(bot) is not in G
+Traceback (most recent call last):
+  File "c:\Users\joaqu\Documents\graphword-mj\app\api\api.py", line 77, in get_shortest_path
+    path = graph.shortest_path(w1, w2)
+  File "c:\Users\joaqu\Documents\graphword-mj\app\graph\graph.py", line 33, in shortest_path
+    return nx.shortest_path(self.graph, Node(w1), Node(w2))
+  File "C:\Users\joaqu\AppData\Local\Programs\Python\Python310\lib\site-packages\networkx\classes\backends.py", line 145, in wrapper
+    return func(*args, **kwds)
+  File "C:\Users\joaqu\AppData\Local\Programs\Python\Python310\lib\site-packages\networkx\algorithms\shortest_paths\generic.py", line 167, in shortest_path
+    paths = nx.bidirectional_shortest_path(G, source, target)
+  File "C:\Users\joaqu\AppData\Local\Programs\Python\Python310\lib\site-packages\networkx\algorithms\shortest_paths\unweighted.py", line 221, in bidirectional_shortest_path
+    raise nx.NodeNotFound(msg)
+networkx.exception.NodeNotFound: Either source Node(dog) or target Node(bot) is not in G
+2025-01-07 03:04:18,938 INFO werkzeug 127.0.0.1 - - [07/Jan/2025 03:04:18] "[35m[1mGET /shortest-path?word1=dog&word2=bot HTTP/1.1[0m" 500 -
+2025-01-07 03:04:22,683 INFO werkzeug 127.0.0.1 - - [07/Jan/2025 03:04:22] "GET /shortest-path?word1=dog&word2=cat HTTP/1.1" 200 -
+2025-01-07 04:18:04,909 INFO __main__ Grafo cargado exitosamente desde c:\Users\joaqu\Documents\graphword-mj\app\graph.pkl: 14076 nodos, 7761 aristas.
+2025-01-07 04:18:04,910 INFO __main__ La aplicaciÛn ha iniciado con el grafo ya cargado.
+2025-01-07 04:18:04,934 INFO werkzeug [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.1.106:5000
+2025-01-07 04:18:04,935 INFO werkzeug [33mPress CTRL+C to quit[0m
+2025-01-07 04:18:04,937 INFO werkzeug  * Restarting with stat
+2025-01-07 04:18:05,509 INFO __main__ Grafo cargado exitosamente desde c:\Users\joaqu\Documents\graphword-mj\app\graph.pkl: 14076 nodos, 7761 aristas.
+2025-01-07 04:18:05,510 INFO __main__ La aplicaciÛn ha iniciado con el grafo ya cargado.
+2025-01-07 04:18:05,521 WARNING werkzeug  * Debugger is active!
+2025-01-07 04:18:05,525 INFO werkzeug  * Debugger PIN: 309-452-387
+2025-01-07 04:18:14,685 INFO werkzeug 127.0.0.1 - - [07/Jan/2025 04:18:14] "GET /shortest-path?word1=dog&word2=cat HTTP/1.1" 200 -
+2025-01-07 04:18:21,722 INFO werkzeug 127.0.0.1 - - [07/Jan/2025 04:18:21] "GET /shortest-path?word1=test&word2=rock HTTP/1.1" 200 -
+2025-01-08 15:13:42,941 INFO __main__ Grafo cargado exitosamente desde /Users/purgan00/graphword-mj 2/app/graph.pkl: 14076 nodos, 7761 aristas.
+2025-01-08 15:13:42,942 INFO __main__ La aplicaci√≥n ha iniciado con el grafo ya cargado.
+2025-01-08 15:19:21,723 INFO __main__ Grafo cargado exitosamente desde /Users/purgan00/graphword-mj 2/app/graph.pkl: 14076 nodos, 7761 aristas.
+2025-01-08 15:19:21,724 INFO __main__ La aplicaci√≥n ha iniciado con el grafo ya cargado.
+2025-01-08 15:19:21,817 INFO werkzeug [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5001
+ * Running on http://192.168.1.149:5001
+2025-01-08 15:19:21,817 INFO werkzeug [33mPress CTRL+C to quit[0m
+2025-01-08 15:19:21,819 INFO werkzeug  * Restarting with stat
+2025-01-08 15:19:22,187 INFO __main__ Grafo cargado exitosamente desde /Users/purgan00/graphword-mj 2/app/graph.pkl: 14076 nodos, 7761 aristas.
+2025-01-08 15:19:22,187 INFO __main__ La aplicaci√≥n ha iniciado con el grafo ya cargado.
+2025-01-08 15:19:22,239 WARNING werkzeug  * Debugger is active!
+2025-01-08 15:19:22,256 INFO werkzeug  * Debugger PIN: 144-667-732
+2025-01-08 15:19:29,716 INFO werkzeug 192.168.1.149 - - [08/Jan/2025 15:19:29] "GET / HTTP/1.1" 200 -
+2025-01-08 15:21:34,046 INFO werkzeug 127.0.0.1 - - [08/Jan/2025 15:21:34] "GET / HTTP/1.1" 200 -
+2025-01-08 15:22:03,957 INFO werkzeug 127.0.0.1 - - [08/Jan/2025 15:22:03] "GET /shortest-path?word1=cat&word2=dog HTTP/1.1" 200 -
+2025-01-08 15:22:30,075 INFO werkzeug 127.0.0.1 - - [08/Jan/2025 15:22:30] "GET /clusters HTTP/1.1" 200 -
+2025-01-08 15:23:05,961 INFO werkzeug 127.0.0.1 - - [08/Jan/2025 15:23:05] "GET /node-info?word=cat HTTP/1.1" 200 -
+2025-01-08 15:23:38,871 INFO werkzeug 127.0.0.1 - - [08/Jan/2025 15:23:38] "GET /node-info?word=cat HTTP/1.1" 200 -
+2025-01-08 15:23:47,952 INFO werkzeug 127.0.0.1 - - [08/Jan/2025 15:23:47] "GET /isolated-nodes HTTP/1.1" 200 -
+2025-01-08 15:26:40,187 INFO werkzeug 127.0.0.1 - - [08/Jan/2025 15:26:40] "GET /graph-stats HTTP/1.1" 200 -
+2025-01-08 15:27:20,536 INFO werkzeug 127.0.0.1 - - [08/Jan/2025 15:27:20] "GET /clusters HTTP/1.1" 200 -
+2025-01-08 15:33:48,410 INFO werkzeug  * Detected change in '/Users/purgan00/graphword-mj 2/app/api/api.py', reloading
+2025-01-08 15:33:48,607 INFO werkzeug  * Restarting with stat
+2025-01-08 15:33:49,547 INFO __main__ Grafo cargado exitosamente desde /Users/purgan00/graphword-mj 2/app/graph.pkl: 14076 nodos, 7761 aristas.
+2025-01-08 15:33:49,548 INFO __main__ La aplicaci√≥n ha iniciado con el grafo ya cargado.
+2025-01-08 15:33:49,624 WARNING werkzeug  * Debugger is active!
+2025-01-08 15:33:49,654 INFO werkzeug  * Debugger PIN: 144-667-732
+2025-01-08 15:38:53,178 INFO werkzeug 127.0.0.1 - - [08/Jan/2025 15:38:53] "GET / HTTP/1.1" 200 -
+2025-01-08 15:39:03,948 ERROR __main__ Error al encontrar el camino m√°s largo: not implemented for undirected type
+Traceback (most recent call last):
+  File "/Users/purgan00/graphword-mj 2/app/api/api.py", line 121, in get_max_distance
+    longest_path = graph.max_distance_path()
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/purgan00/graphword-mj 2/app/graph/graph.py", line 87, in max_distance_path
+    path = nx.dag_longest_path(spanning_tree)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/networkx/utils/decorators.py", line 766, in func
+    return argmap._lazy_compile(__wrapper)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<class 'networkx.utils.decorators.argmap'> compilation 12", line 3, in argmap_dag_longest_path_9
+    import gzip
+         ^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/networkx/utils/decorators.py", line 86, in _not_implemented_for
+    raise nx.NetworkXNotImplemented(errmsg)
+networkx.exception.NetworkXNotImplemented: not implemented for undirected type
+2025-01-08 15:39:04,820 INFO werkzeug 127.0.0.1 - - [08/Jan/2025 15:39:04] "[35m[1mGET /max-distance HTTP/1.1[0m" 500 -
+2025-01-08 15:39:11,366 ERROR __main__ Error al encontrar el camino m√°s largo: not implemented for undirected type
+Traceback (most recent call last):
+  File "/Users/purgan00/graphword-mj 2/app/api/api.py", line 121, in get_max_distance
+    longest_path = graph.max_distance_path()
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/purgan00/graphword-mj 2/app/graph/graph.py", line 87, in max_distance_path
+    path = nx.dag_longest_path(spanning_tree)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<class 'networkx.utils.decorators.argmap'> compilation 12", line 3, in argmap_dag_longest_path_9
+    import gzip
+         ^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/networkx/utils/decorators.py", line 86, in _not_implemented_for
+    raise nx.NetworkXNotImplemented(errmsg)
+networkx.exception.NetworkXNotImplemented: not implemented for undirected type
+2025-01-08 15:39:11,431 INFO werkzeug 127.0.0.1 - - [08/Jan/2025 15:39:11] "[35m[1mGET /max-distance HTTP/1.1[0m" 500 -
+2025-01-08 15:39:20,637 ERROR __main__ Error al encontrar el camino m√°s largo: not implemented for undirected type
+Traceback (most recent call last):
+  File "/Users/purgan00/graphword-mj 2/app/api/api.py", line 121, in get_max_distance
+    longest_path = graph.max_distance_path()
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/purgan00/graphword-mj 2/app/graph/graph.py", line 87, in max_distance_path
+    path = nx.dag_longest_path(spanning_tree)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<class 'networkx.utils.decorators.argmap'> compilation 12", line 3, in argmap_dag_longest_path_9
+    import gzip
+         ^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/networkx/utils/decorators.py", line 86, in _not_implemented_for
+    raise nx.NetworkXNotImplemented(errmsg)
+networkx.exception.NetworkXNotImplemented: not implemented for undirected type
+2025-01-08 15:39:20,668 INFO werkzeug 127.0.0.1 - - [08/Jan/2025 15:39:20] "[35m[1mGET /max-distance HTTP/1.1[0m" 500 -
+2025-01-08 15:39:29,638 INFO werkzeug 127.0.0.1 - - [08/Jan/2025 15:39:29] "GET /clusters HTTP/1.1" 200 -
+2025-01-08 15:39:36,711 INFO werkzeug 127.0.0.1 - - [08/Jan/2025 15:39:36] "GET / HTTP/1.1" 200 -
+2025-01-08 15:40:03,300 ERROR __main__ Error al encontrar el camino m√°s largo: not implemented for undirected type
+Traceback (most recent call last):
+  File "/Users/purgan00/graphword-mj 2/app/api/api.py", line 121, in get_max_distance
+    longest_path = graph.max_distance_path()
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/purgan00/graphword-mj 2/app/graph/graph.py", line 87, in max_distance_path
+    path = nx.dag_longest_path(spanning_tree)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<class 'networkx.utils.decorators.argmap'> compilation 12", line 3, in argmap_dag_longest_path_9
+    import gzip
+         ^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/networkx/utils/decorators.py", line 86, in _not_implemented_for
+    raise nx.NetworkXNotImplemented(errmsg)
+networkx.exception.NetworkXNotImplemented: not implemented for undirected type
+2025-01-08 15:40:03,353 INFO werkzeug 127.0.0.1 - - [08/Jan/2025 15:40:03] "[35m[1mGET /max-distance HTTP/1.1[0m" 500 -
+2025-01-08 15:42:42,970 INFO __main__ Grafo cargado exitosamente desde /Users/purgan00/graphword-mj 2/app/graph.pkl: 14076 nodos, 7761 aristas.
+2025-01-08 15:42:42,971 INFO __main__ La aplicaci√≥n ha iniciado con el grafo ya cargado.
+2025-01-08 15:42:43,071 INFO werkzeug [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5001
+ * Running on http://192.168.1.149:5001
+2025-01-08 15:42:43,071 INFO werkzeug [33mPress CTRL+C to quit[0m
+2025-01-08 15:42:43,072 INFO werkzeug  * Restarting with stat
+2025-01-08 15:42:43,529 INFO __main__ Grafo cargado exitosamente desde /Users/purgan00/graphword-mj 2/app/graph.pkl: 14076 nodos, 7761 aristas.
+2025-01-08 15:42:43,530 INFO __main__ La aplicaci√≥n ha iniciado con el grafo ya cargado.
+2025-01-08 15:42:43,583 WARNING werkzeug  * Debugger is active!
+2025-01-08 15:42:43,602 INFO werkzeug  * Debugger PIN: 144-667-732
+2025-01-08 15:43:00,853 INFO werkzeug 127.0.0.1 - - [08/Jan/2025 15:43:00] "GET / HTTP/1.1" 200 -
+2025-01-08 15:43:00,857 INFO werkzeug 127.0.0.1 - - [08/Jan/2025 15:43:00] "GET / HTTP/1.1" 200 -
+2025-01-08 15:43:31,132 INFO werkzeug 127.0.0.1 - - [08/Jan/2025 15:43:31] "GET /node-info?word=dog HTTP/1.1" 200 -
+2025-01-08 15:43:36,536 INFO werkzeug 127.0.0.1 - - [08/Jan/2025 15:43:36] "GET / HTTP/1.1" 200 -
+2025-01-08 15:45:44,981 INFO werkzeug  * Detected change in '/Users/purgan00/graphword-mj 2/app/api/api.py', reloading
+2025-01-08 15:45:45,137 INFO werkzeug  * Restarting with stat
+2025-01-08 15:45:45,838 INFO __main__ Grafo cargado exitosamente desde /Users/purgan00/graphword-mj 2/app/graph.pkl: 14076 nodos, 7761 aristas.
+2025-01-08 15:45:45,839 INFO __main__ La aplicaci√≥n ha iniciado con el grafo ya cargado.
+2025-01-08 15:45:45,908 WARNING werkzeug  * Debugger is active!
+2025-01-08 15:45:45,921 INFO werkzeug  * Debugger PIN: 144-667-732
+2025-01-08 15:45:57,703 INFO werkzeug 127.0.0.1 - - [08/Jan/2025 15:45:57] "GET / HTTP/1.1" 200 -

@@ -1,0 +1,49 @@
+name: Terraform Workflow
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+env:
+  TF_VAR_file: terraform/terraform.tfvars  # Ruta al archivo tfvars
+
+jobs:
+  terraform:
+    name: Apply Terraform
+    runs-on: ubuntu-latest
+
+    steps:
+      # Paso 1: Checkout del repositorio
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # Paso 2: Configurar AWS CLI con las claves
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1  # Cambia según tu región
+
+      # Paso 3: Instalar Terraform
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.0
+
+      # Paso 4: Inicializar Terraform
+      - name: Initialize Terraform
+        run: terraform init -var-file=${{ env.TF_VAR_file }}
+
+      # Paso 5: Planificar cambios con Terraform
+      - name: Terraform Plan
+        run: terraform plan -var-file=${{ env.TF_VAR_file }}
+
+      # Paso 6: Aplicar cambios con Terraform
+      - name: Terraform Apply
+        if: github.event_name == 'push'
+        run: terraform apply -auto-approve -var-file=${{ env.TF_VAR_file }}
