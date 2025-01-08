@@ -1,6 +1,3 @@
-########################################################
-# terraform/main.tf
-########################################################
 provider "aws" {
   region     = "us-east-1"
   access_key = var.aws_access_key_id
@@ -8,121 +5,87 @@ provider "aws" {
   token      = var.aws_session_token
 }
 
-variable "aws_access_key_id" {}
-variable "aws_secret_access_key" {}
-variable "aws_session_token" {}
-
-variable "key_name" {
-  description = "Nombre del Key Pair para SSH"
-  type        = string
-}
-
-variable "public_key_path" {
-  description = "Ruta a la llave pública SSH"
-  type        = string
-}
-
-resource "aws_key_pair" "deployer" {
-  key_name   = var.key_name
-  public_key = file(var.public_key_path)
-}
-
-data "aws_vpc" "default" {
-  default = true
-}
-
-data "aws_subnets" "default" {
-  filter {
-    name   = "vpc-id"
-    values = [data.aws_vpc.default.id]
-  }
-}
-
-resource "aws_security_group" "graph_sg" {
-  name        = "graph_sg"
-  description = "Allow inbound on ports 80, 5001, and SSH"
-  vpc_id      = data.aws_vpc.default.id
-
-  ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-    description = "Allow HTTP traffic on port 80"
-  }
-
-  ingress {
-    from_port   = 5001
-    to_port     = 5001
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-    description = "Allow HTTP traffic on port 5001"
-  }
-
-  ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-    description = "Allow SSH traffic from any IP"
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-    description = "Allow all outbound traffic"
-  }
-
-  tags = {
-    Name = "graph_sg"
-  }
-}
+# ... [resto de variables igual]
 
 resource "aws_instance" "graph_ec2" {
-  ami                    = "ami-0e731c8a588258d0d"
-  instance_type          = "t2.micro"
-  subnet_id              = tolist(data.aws_subnets.default.ids)[0]
-  vpc_security_group_ids = [aws_security_group.graph_sg.id]
-  key_name               = aws_key_pair.deployer.key_name
+  ami                         = "ami-0e731c8a588258d0d"
+  instance_type               = "t2.micro"
+  subnet_id                   = tolist(data.aws_subnets.default.ids)[0]
+  vpc_security_group_ids      = [aws_security_group.graph_sg.id]
+  key_name                    = aws_key_pair.deployer.key_name
   associate_public_ip_address = true
 
   user_data = <<-EOF
     #!/bin/bash
     set -e
-    exec > /var/log/user-data.log 2>&1
+    exec > >(tee /var/log/user-data.log) 2>&1
 
+    # Actualizar e instalar dependencias
     dnf update -y
     dnf install -y python3-pip git nginx
 
-    cd /home/ec2-user
-    git clone https://github.com/MeyDeiMey/grafo-mj.git
+    # Configurar permisos y directorio
+    usermod -a -G wheel ec2-user
+    chown -R ec2-user:ec2-user /home/ec2-user
 
-    cd clean-repo/app
+    # Clonar repositorio
+    cd /home/ec2-user
+    git clone https://github.com/MeyDeiMey/grafo-mj.git app
+    
+    # Instalar dependencias de Python
+    cd /home/ec2-user/app
     pip3 install -r requirements.txt
     pip3 install gunicorn flask-cors
 
-    cat > /etc/nginx/conf.d/graphword.conf << EOL
+    # Configurar Nginx
+    cat > /etc/nginx/conf.d/graphword.conf << 'EOL'
     server {
         listen 80;
         server_name _;
 
         location / {
             proxy_pass http://127.0.0.1:5001;
-            proxy_set_header Host \$host;
-            proxy_set_header X-Real-IP \$remote_addr;
-            proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto \$scheme;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
         }
     }
     EOL
 
-    systemctl enable nginx
-    systemctl restart nginx
+    # Eliminar la configuración default si existe
+    rm -f /etc/nginx/conf.d/default.conf
 
-    cd /home/ec2-user/clean-repo/app/api
-    nohup gunicorn --bind 127.0.0.1:5001 api:app > app.log 2>&1 &
+    # Configurar y arrancar servicios
+    systemctl enable nginx
+    systemctl start nginx
+
+    # Crear servicio systemd para la aplicación
+    cat > /etc/systemd/system/graphapp.service << 'EOL'
+    [Unit]
+    Description=Graph Application Service
+    After=network.target
+
+    [Service]
+    User=ec2-user
+    WorkingDirectory=/home/ec2-user/app
+    Environment="PATH=/home/ec2-user/.local/bin:/usr/local/bin:/usr/bin:/bin"
+    ExecStart=/usr/local/bin/gunicorn --bind 127.0.0.1:5001 api:app
+    Restart=always
+
+    [Install]
+    WantedBy=multi-user.target
+    EOL
+
+    # Habilitar y arrancar el servicio
+    systemctl daemon-reload
+    systemctl enable graphapp
+    systemctl start graphapp
+
+    # Asegurar que los logs sean accesibles
+    touch /home/ec2-user/app/app.log
+    chown ec2-user:ec2-user /home/ec2-user/app/app.log
+    chmod 644 /home/ec2-user/app/app.log
   EOF
 
   tags = {
