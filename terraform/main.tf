@@ -1,8 +1,59 @@
 provider "aws" {
   region = "us-east-1"
 }
-# ... [resto de variables igual]
 
+# Data source for default VPC
+data "aws_vpc" "default" {
+  default = true
+}
+
+# Data source for subnets
+data "aws_subnets" "default" {
+  filter {
+    name   = "vpc-id"
+    values = [data.aws_vpc.default.id]
+  }
+}
+
+# Security Group
+resource "aws_security_group" "graph_sg" {
+  name        = "graph-sg"
+  description = "Security group for graph application"
+  vpc_id      = data.aws_vpc.default.id
+
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "graph-security-group"
+  }
+}
+
+# Key Pair
+resource "aws_key_pair" "deployer" {
+  key_name   = "graph-deployer-key"
+  public_key = file("~/.ssh/id_rsa.pub")  # Make sure this path points to your public key
+}
+
+# EC2 Instance
 resource "aws_instance" "graph_ec2" {
   ami                         = "ami-0e731c8a588258d0d"
   instance_type               = "t2.micro"
@@ -89,6 +140,7 @@ resource "aws_instance" "graph_ec2" {
   }
 }
 
+# API Gateway resources
 resource "aws_apigatewayv2_api" "graph_api" {
   name          = "graph-api"
   protocol_type = "HTTP"
@@ -121,4 +173,3 @@ output "api_endpoint" {
 output "ec2_public_dns" {
   value = aws_instance.graph_ec2.public_ip
 }
-# Test comment
