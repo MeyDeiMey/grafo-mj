@@ -2,6 +2,12 @@ provider "aws" {
   region = "us-east-1"
 }
 
+# Variables
+variable "public_key" {
+  description = "SSH public key for EC2 instance access"
+  type        = string
+}
+
 # Data source for default VPC
 data "aws_vpc" "default" {
   default = true
@@ -50,7 +56,7 @@ resource "aws_security_group" "graph_sg" {
 # Key Pair
 resource "aws_key_pair" "deployer" {
   key_name   = "graph-deployer-key"
-  public_key = file("~/.ssh/id_rsa.pub")  # Make sure this path points to your public key
+  public_key = var.public_key
 }
 
 # EC2 Instance
