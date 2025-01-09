@@ -125,3 +125,4 @@ output "api_endpoint" {
 output "ec2_public_dns" {
   value = aws_instance.graph_ec2.public_ip
 }
+# Test comment
