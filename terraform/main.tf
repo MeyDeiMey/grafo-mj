@@ -1,8 +1,15 @@
+# Configure the AWS Provider
 provider "aws" {
   region = "us-east-1"
 }
 
 # Variables
+variable "aws_region" {
+  description = "AWS region"
+  type        = string
+  default     = "us-east-1"
+}
+
 variable "public_key" {
   description = "SSH public key for EC2 instance access"
   type        = string
@@ -13,7 +20,6 @@ data "aws_vpc" "default" {
   default = true
 }
 
-# Data source for subnets
 data "aws_subnets" "default" {
   filter {
     name   = "vpc-id"
@@ -23,7 +29,7 @@ data "aws_subnets" "default" {
 
 # Security Group
 resource "aws_security_group" "graph_sg" {
-  name        = "graph-sg"
+  name_prefix = "graph-sg-"
   description = "Security group for graph application"
   vpc_id      = data.aws_vpc.default.id
 
@@ -32,6 +38,7 @@ resource "aws_security_group" "graph_sg" {
     to_port     = 80
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
+    description = "Allow HTTP traffic"
   }
 
   ingress {
@@ -39,6 +46,15 @@ resource "aws_security_group" "graph_sg" {
     to_port     = 22
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
+    description = "Allow SSH traffic"
+  }
+
+  ingress {
+    from_port   = 5001
+    to_port     = 5001
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "Allow application traffic"
   }
 
   egress {
@@ -46,6 +62,11 @@ resource "aws_security_group" "graph_sg" {
     to_port     = 0
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
+    description = "Allow all outbound traffic"
+  }
+
+  lifecycle {
+    create_before_destroy = true
   }
 
   tags = {
@@ -55,42 +76,53 @@ resource "aws_security_group" "graph_sg" {
 
 # Key Pair
 resource "aws_key_pair" "deployer" {
-  key_name   = "graph-deployer-key"
-  public_key = var.public_key
+  key_name_prefix = "graph-deployer-"
+  public_key      = var.public_key
+
+  tags = {
+    Name = "graph-deployer-key"
+  }
 }
 
 # EC2 Instance
 resource "aws_instance" "graph_ec2" {
-  ami                         = "ami-0e731c8a588258d0d"
-  instance_type               = "t2.micro"
-  subnet_id                   = tolist(data.aws_subnets.default.ids)[0]
+  ami           = "ami-0e731c8a588258d0d"  # Amazon Linux 2023
+  instance_type = "t2.micro"
+  subnet_id     = tolist(data.aws_subnets.default.ids)[0]
+
   vpc_security_group_ids      = [aws_security_group.graph_sg.id]
   key_name                    = aws_key_pair.deployer.key_name
   associate_public_ip_address = true
+
+  root_block_device {
+    volume_size = 20
+    volume_type = "gp3"
+    encrypted   = true
+  }
 
   user_data = <<-EOF
     #!/bin/bash
     set -e
     exec > >(tee /var/log/user-data.log) 2>&1
 
-    # Actualizar e instalar dependencias
+    # Update and install dependencies
     dnf update -y
     dnf install -y python3-pip git nginx
 
-    # Configurar permisos y directorio
+    # Configure permissions
     usermod -a -G wheel ec2-user
     chown -R ec2-user:ec2-user /home/ec2-user
 
-    # Clonar repositorio
+    # Clone repository
     cd /home/ec2-user
     git clone https://github.com/MeyDeiMey/grafo-mj.git app
     
-    # Instalar dependencias de Python
+    # Install Python dependencies
     cd /home/ec2-user/app
     pip3 install -r requirements.txt
     pip3 install gunicorn flask-cors
 
-    # Configurar Nginx
+    # Configure Nginx
     cat > /etc/nginx/conf.d/graphword.conf << 'EOL'
     server {
         listen 80;
@@ -106,14 +138,13 @@ resource "aws_instance" "graph_ec2" {
     }
     EOL
 
-    # Eliminar la configuración default si existe
     rm -f /etc/nginx/conf.d/default.conf
 
-    # Configurar y arrancar servicios
+    # Configure and start services
     systemctl enable nginx
     systemctl start nginx
 
-    # Crear servicio systemd para la aplicación
+    # Create systemd service
     cat > /etc/systemd/system/graphapp.service << 'EOL'
     [Unit]
     Description=Graph Application Service
@@ -123,19 +154,19 @@ resource "aws_instance" "graph_ec2" {
     User=ec2-user
     WorkingDirectory=/home/ec2-user/app
     Environment="PATH=/home/ec2-user/.local/bin:/usr/local/bin:/usr/bin:/bin"
-    ExecStart=/usr/local/bin/gunicorn --bind 127.0.0.1:5001 api:app
+    ExecStart=/usr/local/bin/gunicorn --bind 127.0.0.1:5001 --workers 4 --timeout 120 api:app
     Restart=always
 
     [Install]
     WantedBy=multi-user.target
     EOL
 
-    # Habilitar y arrancar el servicio
+    # Enable and start service
     systemctl daemon-reload
     systemctl enable graphapp
     systemctl start graphapp
 
-    # Asegurar que los logs sean accesibles
+    # Set up logging
     touch /home/ec2-user/app/app.log
     chown ec2-user:ec2-user /home/ec2-user/app/app.log
     chmod 644 /home/ec2-user/app/app.log
@@ -146,36 +177,11 @@ resource "aws_instance" "graph_ec2" {
   }
 }
 
-# API Gateway resources
-resource "aws_apigatewayv2_api" "graph_api" {
-  name          = "graph-api"
-  protocol_type = "HTTP"
-}
-
-resource "aws_apigatewayv2_integration" "http_proxy" {
-  api_id           = aws_apigatewayv2_api.graph_api.id
-  integration_type = "HTTP_PROXY"
-  integration_uri  = "http://${aws_instance.graph_ec2.public_ip}:80"
-  connection_type  = "INTERNET"
-  integration_method = "ANY"
-}
-
-resource "aws_apigatewayv2_route" "proxy" {
-  api_id    = aws_apigatewayv2_api.graph_api.id
-  route_key = "ANY /{proxy+}"
-  target    = "integrations/${aws_apigatewayv2_integration.http_proxy.id}"
-}
-
-resource "aws_apigatewayv2_stage" "dev" {
-  api_id      = aws_apigatewayv2_api.graph_api.id
-  name        = "dev"
-  auto_deploy = true
-}
-
+# Outputs
 output "api_endpoint" {
-  value = aws_apigatewayv2_stage.dev.invoke_url
+  value = "http://${aws_instance.graph_ec2.public_ip}"
 }
 
-output "ec2_public_dns" {
+output "ec2_public_ip" {
   value = aws_instance.graph_ec2.public_ip
 }
