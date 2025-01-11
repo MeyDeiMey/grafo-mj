@@ -1,4 +1,3 @@
-# Cambios en tu repositorio local
 provider "aws" {
   region     = "us-east-1"
   access_key = var.aws_access_key_id
@@ -6,7 +5,6 @@ provider "aws" {
   token      = var.aws_session_token
 }
 
-# Variables permanecen igual...
 variable "aws_access_key_id" {}
 variable "aws_secret_access_key" {}
 variable "aws_session_token" {}
@@ -19,7 +17,6 @@ variable "public_key_path" {
   type        = string
 }
 
-# Resources permanecen igual...
 resource "aws_key_pair" "deployer" {
   key_name   = var.key_name
   public_key = file(var.public_key_path)
@@ -36,9 +33,9 @@ data "aws_subnets" "default" {
   }
 }
 
-# Security Group corregido para incluir puerto 5001
+# Security Group corregido para evitar duplicados
 resource "aws_security_group" "graph_sg" {
-  name        = "graph_sg"
+  name_prefix = "graph_sg_" # Se genera un nombre único automáticamente
   description = "Security group for graph application"
   vpc_id      = data.aws_vpc.default.id
 
@@ -78,7 +75,6 @@ resource "aws_security_group" "graph_sg" {
   }
 }
 
-# EC2 Instance con user_data corregido
 resource "aws_instance" "graph_ec2" {
   ami                    = "ami-0e731c8a588258d0d"
   instance_type          = "t2.micro"
@@ -145,7 +141,6 @@ EOF
   }
 }
 
-# API Gateway con CORS habilitado
 resource "aws_apigatewayv2_api" "graph_api" {
   name          = "graph-api"
   protocol_type = "HTTP"
@@ -164,14 +159,12 @@ resource "aws_apigatewayv2_integration" "http_proxy" {
   connection_type    = "INTERNET"
 }
 
-# Ruta para root path
 resource "aws_apigatewayv2_route" "root" {
   api_id    = aws_apigatewayv2_api.graph_api.id
   route_key = "ANY /"
   target    = "integrations/${aws_apigatewayv2_integration.http_proxy.id}"
 }
 
-# Ruta para todos los demás paths
 resource "aws_apigatewayv2_route" "proxy" {
   api_id    = aws_apigatewayv2_api.graph_api.id
   route_key = "ANY /{proxy+}"
