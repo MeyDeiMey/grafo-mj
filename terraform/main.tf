@@ -1,6 +1,3 @@
-########################################################
-# terraform/main.tf
-########################################################
 provider "aws" {
   region     = "us-east-1"
   access_key = var.aws_access_key_id
@@ -8,20 +5,20 @@ provider "aws" {
   token      = var.aws_session_token
 }
 
+# Variables permanecen igual...
 variable "aws_access_key_id" {}
 variable "aws_secret_access_key" {}
 variable "aws_session_token" {}
-
 variable "key_name" {
   description = "Nombre del Key Pair para SSH"
   type        = string
 }
-
 variable "public_key_path" {
   description = "Ruta a la llave pública SSH"
   type        = string
 }
 
+# Resources permanecen igual...
 resource "aws_key_pair" "deployer" {
   key_name   = var.key_name
   public_key = file(var.public_key_path)
@@ -38,9 +35,10 @@ data "aws_subnets" "default" {
   }
 }
 
+# Security Group corregido para incluir puerto 5001
 resource "aws_security_group" "graph_sg" {
   name        = "graph_sg"
-  description = "Allow inbound on ports 80, 5000 and SSH"
+  description = "Security group for graph application"
   vpc_id      = data.aws_vpc.default.id
 
   ingress {
@@ -48,15 +46,15 @@ resource "aws_security_group" "graph_sg" {
     to_port     = 80
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
-    description = "Allow HTTP traffic on port 80"
+    description = "Allow HTTP"
   }
 
   ingress {
-    from_port   = 5000
-    to_port     = 5000
+    from_port   = 5001
+    to_port     = 5001
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
-    description = "Allow HTTP traffic on port 5000"
+    description = "Allow Flask application"
   }
 
   ingress {
@@ -64,7 +62,7 @@ resource "aws_security_group" "graph_sg" {
     to_port     = 22
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
-    description = "Allow SSH from any IP"
+    description = "Allow SSH"
   }
 
   egress {
@@ -72,7 +70,6 @@ resource "aws_security_group" "graph_sg" {
     to_port     = 0
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
-    description = "Allow all outbound traffic"
   }
 
   tags = {
@@ -80,105 +77,100 @@ resource "aws_security_group" "graph_sg" {
   }
 }
 
+# EC2 Instance con user_data corregido
 resource "aws_instance" "graph_ec2" {
-  ami                    = "ami-0e731c8a588258d0d"  # Verifica que este AMI existe en us-east-1
+  ami                    = "ami-0e731c8a588258d0d"
   instance_type          = "t2.micro"
   subnet_id              = tolist(data.aws_subnets.default.ids)[0]
   vpc_security_group_ids = [aws_security_group.graph_sg.id]
   key_name               = aws_key_pair.deployer.key_name
-
-  associate_public_ip_address = true  # IP pública dinámica
+  associate_public_ip_address = true
 
   user_data = <<-EOF
-    #!/bin/bash
-    set -e
-    exec > /var/log/user-data.log 2>&1
+#!/bin/bash
+set -e
+exec > /var/log/user-data.log 2>&1
 
-    echo "Iniciando configuración de la instancia EC2"
+echo "Starting EC2 configuration"
 
-    # Actualizar paquetes
-    dnf update -y
-    echo "Actualización de paquetes completada"
+# Update packages
+dnf update -y
+dnf install -y python3-pip git nginx python3-devel
+echo "Package update completed"
 
-    # Instalar dependencias
-    dnf install -y python3-pip git nginx
-    echo "Instalación de dependencias completada"
+# Clone repository
+cd /home/ec2-user
+git clone https://github.com/MeyDeiMey/grafo-mj.git
+echo "Repository cloned"
 
-    # Clonar el repositorio
-    cd /home/ec2-user
-    git clone https://github.com/JoaquinIP/graphword-mj.git
-    echo "Clonación del repositorio completada"
+# Configure Nginx
+cat > /etc/nginx/conf.d/graphword.conf << 'EONG'
+server {
+    listen 80;
+    server_name _;
 
-    # (1) Eliminar/renombrar default.conf si existe, para evitar conflictos de server_name "_"
-    if [ -f /etc/nginx/conf.d/default.conf ]; then
-      mv /etc/nginx/conf.d/default.conf /etc/nginx/conf.d/default.conf.backup
-      echo "default.conf renombrado para evitar conflicto de server_name _"
-    fi
-
-    # Navegar al directorio de la APP
-    cd graphword-mj/app
-    echo "Navegación al directorio de la APP completada"
-
-    # Instalar dependencias de Python
-    pip3 install -r requirements.txt
-    pip3 install gunicorn flask-cors
-    echo "Instalación de dependencias de Python completada"
-
-    # Configurar Nginx como proxy inverso
-    cat > /etc/nginx/conf.d/graphword.conf << EOL
-    server {
-        listen 80;
-        server_name _;
-
-        location / {
-            proxy_pass http://127.0.0.1:5000;
-            proxy_set_header Host \$host;
-            proxy_set_header X-Real-IP \$remote_addr;
-            proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto \$scheme;
-        }
+    location / {
+        proxy_pass http://127.0.0.1:5001;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
     }
-    EOL
-    echo "Configuración de Nginx completada"
+}
+EONG
 
-    systemctl enable nginx
-    systemctl restart nginx
-    echo "Nginx reiniciado"
+# Remove default nginx config
+rm -f /etc/nginx/conf.d/default.conf
 
-    # Navegar al directorio de la API Flask
-    cd /home/ec2-user/graphword-mj/app/api
-    echo "Navegación al directorio de la API Flask completada"
+# Install Python dependencies
+cd /home/ec2-user/ultimoBaile-TSCD/app
+pip3 install -r requirements.txt
+pip3 install gunicorn flask-cors networkx
 
-    # Iniciar la API con Gunicorn (modo simple)
-    nohup gunicorn --bind 127.0.0.1:5000 api:app > app.log 2>&1 &
-    echo "Gunicorn iniciado"
-  EOF
+# Start Nginx
+systemctl enable nginx
+systemctl restart nginx
+
+# Start Flask application
+cd /home/ec2-user/ultimoBaile-TSCD/app
+nohup gunicorn --bind 127.0.0.1:5001 --log-level debug api:app > /home/ec2-user/gunicorn.log 2>&1 &
+
+# Set permissions
+chown -R ec2-user:ec2-user /home/ec2-user
+EOF
 
   tags = {
     Name = "GraphWordInstance"
   }
 }
 
-###################################################
-# API Gateway
-###################################################
+# API Gateway con CORS habilitado
 resource "aws_apigatewayv2_api" "graph_api" {
   name          = "graph-api"
   protocol_type = "HTTP"
+  cors_configuration {
+    allow_origins = ["*"]
+    allow_methods = ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+    allow_headers = ["*"]
+  }
 }
 
 resource "aws_apigatewayv2_integration" "http_proxy" {
   api_id             = aws_apigatewayv2_api.graph_api.id
   integration_type   = "HTTP_PROXY"
-
-  # (2) Sin barra inclinada final
-  integration_uri    = "http://${aws_instance.graph_ec2.public_dns}:80"
-  connection_type    = "INTERNET"
+  integration_uri    = "http://${aws_instance.graph_ec2.public_dns}"
   integration_method = "ANY"
-
-  depends_on = [aws_instance.graph_ec2]
+  connection_type    = "INTERNET"
 }
 
+# Ruta para root path
+resource "aws_apigatewayv2_route" "root" {
+  api_id    = aws_apigatewayv2_api.graph_api.id
+  route_key = "ANY /"
+  target    = "integrations/${aws_apigatewayv2_integration.http_proxy.id}"
+}
+
+# Ruta para todos los demás paths
 resource "aws_apigatewayv2_route" "proxy" {
   api_id    = aws_apigatewayv2_api.graph_api.id
   route_key = "ANY /{proxy+}"
@@ -191,9 +183,6 @@ resource "aws_apigatewayv2_stage" "dev" {
   auto_deploy = true
 }
 
-########################################
-# Outputs
-########################################
 output "api_endpoint" {
   value = aws_apigatewayv2_stage.dev.invoke_url
 }
