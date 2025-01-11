@@ -1,5 +1,3 @@
-# Cambios en tu repositorio local=======
-# Cambios en tu repositorio local
 from flask import Flask, request, jsonify
 from werkzeug.middleware.proxy_fix import ProxyFix
 import os
@@ -36,7 +34,6 @@ is_initialized = False
 def load_graph():
     global is_initialized
     try:
-        # Ajustar la ruta para apuntar a graphword-mj en lugar de app/api
         serialized_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'graph.pkl')
         if not os.path.isfile(serialized_path):
             logger.error(f"Archivo serializado del grafo no encontrado en {serialized_path}")
@@ -63,11 +60,9 @@ def index():
         "endpoints": {
             "GET /shortest-path?word1=...&word2=...": "Obtiene el camino más corto entre dos palabras",
             "GET /clusters": "Retorna los componentes conectados del grafo",
-            "GET /high-connectivity?degree=2": "Retorna los nodos con grado >= 2"
+            "GET /high-connectivity?degree=2": "Retorna los nodos con grado >= 2",
             "GET /all-paths?word1=...&word2=...&cutoff=...": "Encuentra todos los caminos posibles entre dos palabras",
             "GET /max-distance": "Encuentra el camino más largo sin ciclos en el grafo",
-            "GET /clusters": "Retorna los componentes conectados del grafo",
-            "GET /high-connectivity?degree=2": "Retorna los nodos con grado >= 2",
             "GET /isolated-nodes": "Encuentra todos los nodos sin conexiones",
             "GET /node-info?word=...": "Obtiene información detallada de un nodo específico",
             "GET /graph-stats": "Obtiene estadísticas generales del grafo",
@@ -86,7 +81,6 @@ def get_shortest_path():
 
     try:
         path = graph.shortest_path(w1, w2)
-        return jsonify({"path": [node.word for node in path]})
         return jsonify({
             "path": [node.word for node in path],
             "length": len(path) - 1
@@ -95,7 +89,6 @@ def get_shortest_path():
         return jsonify({"message": "No se encontró un camino entre las palabras dadas."}), 404
     except Exception as e:
         logger.error(f"Error al encontrar el camino más corto: {e}", exc_info=True)
-        return jsonify({"error": f"Error al encontrar el camino más corto: {str(e)}"}), 500
         return jsonify({"error": str(e)}), 500
 
 @app.route("/all-paths", methods=["GET"])
@@ -143,11 +136,6 @@ def get_clusters():
         return jsonify({"error": "Grafo no inicializado correctamente."}), 500
     try:
         clusters = graph.clusters()
-        cluster_list = [list(cluster) for cluster in clusters]
-        return jsonify({"clusters": cluster_list})
-    except Exception as e:
-        logger.error(f"Error al obtener clusters: {e}", exc_info=True)
-        return jsonify({"error": f"Error al obtener clusters: {str(e)}"}), 500
         cluster_list = [[node.word for node in cluster] for cluster in clusters]
         return jsonify({
             "clusters": cluster_list,
@@ -164,10 +152,6 @@ def get_high_connectivity():
     degree = request.args.get("degree", 2, type=int)
     try:
         nodes = graph.high_connectivity_nodes(degree)
-        return jsonify({"nodes": [n.word for n in nodes]})
-    except Exception as e:
-        logger.error(f"Error al obtener nodos de alta conectividad: {e}", exc_info=True)
-        return jsonify({"error": f"Error al obtener nodos de alta conectividad: {str(e)}"}), 500
         return jsonify({
             "nodes": [n.word for n in nodes],
             "count": len(nodes)
@@ -237,8 +221,5 @@ def list_routes():
         output[url] = methods
     return jsonify(output)
 
-
-if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=5001)
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5001)
