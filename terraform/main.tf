@@ -1,4 +1,4 @@
-#main.tf 
+#Prueba1
 #provider
 provider "aws" {
   region = "us-east-1"
