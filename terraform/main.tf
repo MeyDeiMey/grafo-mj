@@ -196,3 +196,4 @@ output "public_ip" {
 output "ssh_command" {
   value = "ssh -i ~/.ssh/deployer-key ec2-user@${aws_instance.app_server.public_ip}"
 }
+  

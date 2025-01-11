@@ -37,6 +37,8 @@ jobs:
         run: terraform init
         
       - name: Terraform Apply
+        env:
+          TF_VAR_public_key: ${{ secrets.SSH_PUBLIC_KEY }}
         run: terraform apply -auto-approve -input=false
 
       - name: Deployment Status
@@ -49,7 +51,7 @@ jobs:
             exit 1
 
       - name: Cleanup with Terraform Destroy
-        if: always()  # Se ejecuta aunque los pasos anteriores fallen
+        if: always()
         run: |
           echo "💡 Starting Terraform destroy..."
           terraform destroy -auto-approve
