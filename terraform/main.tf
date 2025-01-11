@@ -21,6 +21,16 @@ resource "aws_security_group" "app_sg" {
   description = "Security group for graph application"
   vpc_id      = data.aws_vpc.default.id
 
+  # SSH access
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "Allow SSH access"
+  }
+
+  # HTTP access
   ingress {
     from_port   = 80
     to_port     = 80
@@ -29,6 +39,7 @@ resource "aws_security_group" "app_sg" {
     description = "Allow HTTP traffic"
   }
 
+  # Application port
   ingress {
     from_port   = 5001
     to_port     = 5001
@@ -67,12 +78,15 @@ resource "aws_instance" "app_server" {
 
   user_data = <<-EOF
     #!/bin/bash
-    set -e
+    set -ex
     exec > >(tee /var/log/user-data.log) 2>&1
 
     # Update and install dependencies
     dnf update -y
     dnf install -y python3-pip git nginx
+
+    # Install development tools
+    dnf groupinstall -y "Development Tools"
 
     # Configure permissions
     usermod -a -G wheel ec2-user
@@ -82,16 +96,24 @@ resource "aws_instance" "app_server" {
     cd /home/ec2-user
     git clone https://github.com/MeyDeiMey/grafo-mj.git app
     
-    # Install Python dependencies
-    cd /home/ec2-user/app
-    pip3 install -r requirements.txt
-    pip3 install gunicorn flask-cors
+    # Set permissions
+    chown -R ec2-user:ec2-user /home/ec2-user/app
+
+    # Install Python dependencies as ec2-user
+    su - ec2-user -c "cd /home/ec2-user/app && pip3 install --user -r requirements.txt"
+    su - ec2-user -c "pip3 install --user gunicorn flask-cors"
 
     # Configure Nginx
     cat > /etc/nginx/conf.d/app.conf << 'EOL'
     server {
         listen 80;
         server_name _;
+
+        # Increase timeouts
+        proxy_connect_timeout 60;
+        proxy_send_timeout    60;
+        proxy_read_timeout    60;
+        send_timeout         60;
 
         location / {
             proxy_pass http://127.0.0.1:5001;
@@ -105,9 +127,12 @@ resource "aws_instance" "app_server" {
 
     rm -f /etc/nginx/conf.d/default.conf
 
+    # Configure SELinux for Nginx
+    setsebool -P httpd_can_network_connect 1
+
     # Start Nginx
     systemctl enable nginx
-    systemctl start nginx
+    systemctl restart nginx
 
     # Configure application service
     cat > /etc/systemd/system/graphapp.service << 'EOL'
@@ -119,17 +144,29 @@ resource "aws_instance" "app_server" {
     User=ec2-user
     WorkingDirectory=/home/ec2-user/app
     Environment="PATH=/home/ec2-user/.local/bin:/usr/local/bin:/usr/bin:/bin"
-    ExecStart=/usr/local/bin/gunicorn --bind 127.0.0.1:5001 --workers 4 --timeout 120 api:app
+    ExecStart=/home/ec2-user/.local/bin/gunicorn --bind 127.0.0.1:5001 --workers 4 --timeout 120 --log-level debug api:app
     Restart=always
+    StandardOutput=append:/var/log/graphapp.log
+    StandardError=append:/var/log/graphapp.error.log
 
     [Install]
     WantedBy=multi-user.target
     EOL
 
+    # Create log files with correct permissions
+    touch /var/log/graphapp.log /var/log/graphapp.error.log
+    chown ec2-user:ec2-user /var/log/graphapp.log /var/log/graphapp.error.log
+
     # Start application
     systemctl daemon-reload
     systemctl enable graphapp
-    systemctl start graphapp
+    systemctl restart graphapp
+
+    # Wait for application to start
+    sleep 10
+
+    # Check service status
+    systemctl status graphapp
   EOF
 
   tags = {
@@ -148,4 +185,8 @@ output "instance_id" {
 
 output "public_ip" {
   value = aws_instance.app_server.public_ip
+}
+
+output "ssh_command" {
+  value = "ssh ec2-user@${aws_instance.app_server.public_ip}"
 }
