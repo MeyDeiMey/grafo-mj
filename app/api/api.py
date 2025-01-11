@@ -1,5 +1,5 @@
-# api/api.py
-
+# Cambios en tu repositorio local=======
+# Cambios en tu repositorio local
 from flask import Flask, request, jsonify
 from werkzeug.middleware.proxy_fix import ProxyFix
 import os
@@ -64,6 +64,14 @@ def index():
             "GET /shortest-path?word1=...&word2=...": "Obtiene el camino más corto entre dos palabras",
             "GET /clusters": "Retorna los componentes conectados del grafo",
             "GET /high-connectivity?degree=2": "Retorna los nodos con grado >= 2"
+            "GET /all-paths?word1=...&word2=...&cutoff=...": "Encuentra todos los caminos posibles entre dos palabras",
+            "GET /max-distance": "Encuentra el camino más largo sin ciclos en el grafo",
+            "GET /clusters": "Retorna los componentes conectados del grafo",
+            "GET /high-connectivity?degree=2": "Retorna los nodos con grado >= 2",
+            "GET /isolated-nodes": "Encuentra todos los nodos sin conexiones",
+            "GET /node-info?word=...": "Obtiene información detallada de un nodo específico",
+            "GET /graph-stats": "Obtiene estadísticas generales del grafo",
+            "GET /routes": "Lista todas las rutas disponibles en la API"
         }
     })
 
@@ -79,11 +87,55 @@ def get_shortest_path():
     try:
         path = graph.shortest_path(w1, w2)
         return jsonify({"path": [node.word for node in path]})
+        return jsonify({
+            "path": [node.word for node in path],
+            "length": len(path) - 1
+        })
     except nx.NetworkXNoPath:
         return jsonify({"message": "No se encontró un camino entre las palabras dadas."}), 404
     except Exception as e:
         logger.error(f"Error al encontrar el camino más corto: {e}", exc_info=True)
         return jsonify({"error": f"Error al encontrar el camino más corto: {str(e)}"}), 500
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/all-paths", methods=["GET"])
+def get_all_paths():
+    if not is_initialized:
+        return jsonify({"error": "Grafo no inicializado correctamente."}), 500
+    
+    word1 = request.args.get("word1")
+    word2 = request.args.get("word2")
+    cutoff = request.args.get("cutoff", type=int, default=None)
+    
+    if not word1 or not word2:
+        return jsonify({"error": "Faltan parámetros: word1 y word2."}), 400
+
+    try:
+        paths = graph.all_paths(word1, word2, cutoff)
+        return jsonify({
+            "paths": [[node.word for node in path] for path in paths],
+            "total_paths": len(paths)
+        })
+    except Exception as e:
+        logger.error(f"Error al encontrar todos los caminos: {e}", exc_info=True)
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/max-distance", methods=["GET"])
+def get_max_distance():
+    if not is_initialized:
+        return jsonify({"error": "Grafo no inicializado correctamente."}), 500
+    
+    try:
+        longest_path = graph.max_distance_path()
+        if not longest_path:
+            return jsonify({"message": "No se encontró ningún camino en el grafo."}), 404
+        return jsonify({
+            "path": [node.word for node in longest_path],
+            "length": len(longest_path) - 1
+        })
+    except Exception as e:
+        logger.error(f"Error al encontrar el camino más largo: {e}", exc_info=True)
+        return jsonify({"error": str(e)}), 500
 
 @app.route("/clusters", methods=["GET"])
 def get_clusters():
@@ -96,6 +148,14 @@ def get_clusters():
     except Exception as e:
         logger.error(f"Error al obtener clusters: {e}", exc_info=True)
         return jsonify({"error": f"Error al obtener clusters: {str(e)}"}), 500
+        cluster_list = [[node.word for node in cluster] for cluster in clusters]
+        return jsonify({
+            "clusters": cluster_list,
+            "total_clusters": len(cluster_list)
+        })
+    except Exception as e:
+        logger.error(f"Error al obtener clusters: {e}", exc_info=True)
+        return jsonify({"error": str(e)}), 500
 
 @app.route("/high-connectivity", methods=["GET"])
 def get_high_connectivity():
@@ -108,6 +168,64 @@ def get_high_connectivity():
     except Exception as e:
         logger.error(f"Error al obtener nodos de alta conectividad: {e}", exc_info=True)
         return jsonify({"error": f"Error al obtener nodos de alta conectividad: {str(e)}"}), 500
+        return jsonify({
+            "nodes": [n.word for n in nodes],
+            "count": len(nodes)
+        })
+    except Exception as e:
+        logger.error(f"Error al obtener nodos de alta conectividad: {e}", exc_info=True)
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/isolated-nodes", methods=["GET"])
+def get_isolated_nodes():
+    if not is_initialized:
+        return jsonify({"error": "Grafo no inicializado correctamente."}), 500
+    
+    try:
+        isolated = graph.get_isolated_nodes()
+        return jsonify({
+            "isolated_nodes": [node.word for node in isolated],
+            "count": len(isolated)
+        })
+    except Exception as e:
+        logger.error(f"Error al encontrar nodos aislados: {e}", exc_info=True)
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/node-info", methods=["GET"])
+def get_node_info():
+    if not is_initialized:
+        return jsonify({"error": "Grafo no inicializado correctamente."}), 500
+    
+    word = request.args.get("word")
+    if not word:
+        return jsonify({"error": "Falta el parámetro: word."}), 400
+    
+    try:
+        degree = graph.get_node_degree(word)
+        return jsonify({
+            "word": word,
+            "degree": degree,
+            "is_isolated": degree == 0
+        })
+    except Exception as e:
+        logger.error(f"Error al obtener información del nodo: {e}", exc_info=True)
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/graph-stats", methods=["GET"])
+def get_graph_stats():
+    if not is_initialized:
+        return jsonify({"error": "Grafo no inicializado correctamente."}), 500
+    
+    try:
+        return jsonify({
+            "total_nodes": graph.graph.number_of_nodes(),
+            "total_edges": graph.graph.number_of_edges(),
+            "density": graph.get_graph_density(),
+            "connectivity": graph.get_node_connectivity()
+        })
+    except Exception as e:
+        logger.error(f"Error al obtener estadísticas del grafo: {e}", exc_info=True)
+        return jsonify({"error": str(e)}), 500
 
 @app.route("/routes", methods=["GET"])
 def list_routes():
@@ -120,5 +238,7 @@ def list_routes():
     return jsonify(output)
 
 
+if __name__ == "__main__":
+    app.run(debug=True, host="0.0.0.0", port=5001)
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5001)
