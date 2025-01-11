@@ -33,7 +33,6 @@ data "aws_subnets" "default" {
   }
 }
 
-# Security Group corregido para evitar duplicados
 resource "aws_security_group" "graph_sg" {
   name_prefix = "graph_sg_" # Se genera un nombre único automáticamente
   description = "Security group for graph application"
@@ -139,46 +138,6 @@ EOF
   tags = {
     Name = "GraphWordInstance"
   }
-}
-
-resource "aws_apigatewayv2_api" "graph_api" {
-  name          = "graph-api"
-  protocol_type = "HTTP"
-  cors_configuration {
-    allow_origins = ["*"]
-    allow_methods = ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
-    allow_headers = ["*"]
-  }
-}
-
-resource "aws_apigatewayv2_integration" "http_proxy" {
-  api_id             = aws_apigatewayv2_api.graph_api.id
-  integration_type   = "HTTP_PROXY"
-  integration_uri    = "http://${aws_instance.graph_ec2.public_dns}"
-  integration_method = "ANY"
-  connection_type    = "INTERNET"
-}
-
-resource "aws_apigatewayv2_route" "root" {
-  api_id    = aws_apigatewayv2_api.graph_api.id
-  route_key = "ANY /"
-  target    = "integrations/${aws_apigatewayv2_integration.http_proxy.id}"
-}
-
-resource "aws_apigatewayv2_route" "proxy" {
-  api_id    = aws_apigatewayv2_api.graph_api.id
-  route_key = "ANY /{proxy+}"
-  target    = "integrations/${aws_apigatewayv2_integration.http_proxy.id}"
-}
-
-resource "aws_apigatewayv2_stage" "dev" {
-  api_id      = aws_apigatewayv2_api.graph_api.id
-  name        = "dev"
-  auto_deploy = true
-}
-
-output "api_endpoint" {
-  value = aws_apigatewayv2_stage.dev.invoke_url
 }
 
 output "ec2_public_dns" {
