@@ -61,6 +61,12 @@ resource "aws_security_group" "app_sg" {
   }
 }
 
+# Key Pair for SSH Access
+resource "aws_key_pair" "deployer" {
+  key_name   = "deployer-key"
+  public_key = file("~/.ssh/deployer-key.pub") # Update path to your public key file
+}
+
 # EC2 Instance
 resource "aws_instance" "app_server" {
   ami           = "ami-0e731c8a588258d0d"  # Amazon Linux 2023
@@ -69,6 +75,7 @@ resource "aws_instance" "app_server" {
 
   vpc_security_group_ids      = [aws_security_group.app_sg.id]
   associate_public_ip_address = true
+  key_name                    = aws_key_pair.deployer.key_name
 
   root_block_device {
     volume_size = 20
@@ -188,5 +195,5 @@ output "public_ip" {
 }
 
 output "ssh_command" {
-  value = "ssh ec2-user@${aws_instance.app_server.public_ip}"
+  value = "ssh -i ~/.ssh/deployer-key ec2-user@${aws_instance.app_server.public_ip}"
 }
