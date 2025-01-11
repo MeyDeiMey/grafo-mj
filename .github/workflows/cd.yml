@@ -12,6 +12,7 @@ jobs:
   deploy:
     name: 'Deploy'
     runs-on: ubuntu-latest
+    environment: production
     defaults:
       run:
         working-directory: ./terraform
@@ -26,7 +27,6 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
           aws-region: us-east-1
-          mask-aws-account-id: true
           
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
@@ -40,18 +40,12 @@ jobs:
       - name: Terraform Apply
         run: terraform apply -auto-approve -input=false
 
-      - name: Update Deployment Status
+      - name: Deployment Status
         if: always()
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const status = '${{ job.status }}';
-            const message = status === 'success' 
-              ? '✅ Deployment successful' 
-              : '❌ Deployment failed - Check if AWS Academy session is still valid';
-            github.rest.repos.createCommitComment({
-              owner: context.repo.owner,
-              repo: context.repo.name,
-              commit_sha: context.sha,
-              body: message
-            });
+        run: |
+          if [ "${{ job.status }}" = "success" ]; then
+            echo "✅ Deployment successful"
+          else
+            echo "❌ Deployment failed - Check AWS Academy session"
+            exit 1
+          fi

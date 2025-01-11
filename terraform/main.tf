@@ -3,13 +3,6 @@ provider "aws" {
   region = "us-east-1"
 }
 
-# Variables
-variable "aws_region" {
-  description = "AWS region"
-  type        = string
-  default     = "us-east-1"
-}
-
 # Data source for default VPC
 data "aws_vpc" "default" {
   default = true
@@ -22,37 +15,9 @@ data "aws_subnets" "default" {
   }
 }
 
-# IAM role for Systems Manager
-resource "aws_iam_role" "ssm_role" {
-  name = "graph-ssm-role"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Principal = {
-          Service = "ec2.amazonaws.com"
-        }
-      }
-    ]
-  })
-}
-
-resource "aws_iam_role_policy_attachment" "ssm_policy" {
-  role       = aws_iam_role.ssm_role.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
-}
-
-resource "aws_iam_instance_profile" "ssm_profile" {
-  name = "graph-ssm-profile"
-  role = aws_iam_role.ssm_role.name
-}
-
 # Security Group
-resource "aws_security_group" "graph_sg" {
-  name_prefix = "graph-sg-"
+resource "aws_security_group" "app_sg" {
+  name_prefix = "graph-app-"
   description = "Security group for graph application"
   vpc_id      = data.aws_vpc.default.id
 
@@ -80,24 +45,19 @@ resource "aws_security_group" "graph_sg" {
     description = "Allow all outbound traffic"
   }
 
-  lifecycle {
-    create_before_destroy = true
-  }
-
   tags = {
-    Name = "graph-security-group"
+    Name = "graph-app-sg"
   }
 }
 
 # EC2 Instance
-resource "aws_instance" "graph_ec2" {
+resource "aws_instance" "app_server" {
   ami           = "ami-0e731c8a588258d0d"  # Amazon Linux 2023
   instance_type = "t2.micro"
   subnet_id     = tolist(data.aws_subnets.default.ids)[0]
 
-  vpc_security_group_ids      = [aws_security_group.graph_sg.id]
+  vpc_security_group_ids      = [aws_security_group.app_sg.id]
   associate_public_ip_address = true
-  iam_instance_profile        = aws_iam_instance_profile.ssm_profile.name
 
   root_block_device {
     volume_size = 20
@@ -112,7 +72,7 @@ resource "aws_instance" "graph_ec2" {
 
     # Update and install dependencies
     dnf update -y
-    dnf install -y python3-pip git nginx amazon-cloudwatch-agent
+    dnf install -y python3-pip git nginx
 
     # Configure permissions
     usermod -a -G wheel ec2-user
@@ -128,7 +88,7 @@ resource "aws_instance" "graph_ec2" {
     pip3 install gunicorn flask-cors
 
     # Configure Nginx
-    cat > /etc/nginx/conf.d/graphword.conf << 'EOL'
+    cat > /etc/nginx/conf.d/app.conf << 'EOL'
     server {
         listen 80;
         server_name _;
@@ -145,39 +105,11 @@ resource "aws_instance" "graph_ec2" {
 
     rm -f /etc/nginx/conf.d/default.conf
 
-    # Configure CloudWatch agent
-    cat > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json << 'EOL'
-    {
-      "logs": {
-        "logs_collected": {
-          "files": {
-            "collect_list": [
-              {
-                "file_path": "/var/log/user-data.log",
-                "log_group_name": "/graph/user-data",
-                "log_stream_name": "{instance_id}"
-              },
-              {
-                "file_path": "/home/ec2-user/app/app.log",
-                "log_group_name": "/graph/application",
-                "log_stream_name": "{instance_id}"
-              }
-            ]
-          }
-        }
-      }
-    }
-    EOL
-
-    # Start CloudWatch agent
-    systemctl enable amazon-cloudwatch-agent
-    systemctl start amazon-cloudwatch-agent
-
-    # Configure and start services
+    # Start Nginx
     systemctl enable nginx
     systemctl start nginx
 
-    # Create systemd service
+    # Configure application service
     cat > /etc/systemd/system/graphapp.service << 'EOL'
     [Unit]
     Description=Graph Application Service
@@ -194,27 +126,26 @@ resource "aws_instance" "graph_ec2" {
     WantedBy=multi-user.target
     EOL
 
-    # Enable and start service
+    # Start application
     systemctl daemon-reload
     systemctl enable graphapp
     systemctl start graphapp
-
-    # Set up logging
-    touch /home/ec2-user/app/app.log
-    chown ec2-user:ec2-user /home/ec2-user/app/app.log
-    chmod 644 /home/ec2-user/app/app.log
   EOF
 
   tags = {
-    Name = "GraphWordInstance"
+    Name = "graph-app-server"
   }
 }
 
 # Outputs
-output "api_endpoint" {
-  value = "http://${aws_instance.graph_ec2.public_ip}"
+output "app_url" {
+  value = "http://${aws_instance.app_server.public_ip}"
 }
 
-output "connection_command" {
-  value = "aws ssm start-session --target ${aws_instance.graph_ec2.id}"
+output "instance_id" {
+  value = aws_instance.app_server.id
+}
+
+output "public_ip" {
+  value = aws_instance.app_server.public_ip
 }
